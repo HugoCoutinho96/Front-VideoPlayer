@@ -6,6 +6,7 @@ import {convertDuration, formatViews, getVideoDetails, extractVideoId} from "../
 
 export function Home(){
 
+    
     const [list, setList] = useState([])
     const [videoUrl, setVideoUrl] = useState("")
     const [videoDetails, setVideoDetails] = useState(null)
@@ -31,48 +32,47 @@ export function Home(){
     function getClick(){
         const videoId = extractVideoId(videoUrl);
         if (videoId) {
-        // Insira sua chave de API do YouTube aqui
-        const apiKey = "AIzaSyAjzKr8L-B_M6DlVvcE8eOppcxuqr0D2o0";
+            const apiKey = import.meta.env.VITE_API_KEY
+            console.log(apiKey)
+            const ids = list.map(item => item.id)
+            const check = ids.filter(id => id === videoId)
+            
+            if(check.length == 1){
+                alert("Vídeo já está na sua playlist!")
+                setVideoUrl("")
+            }else{
+                // Obtenha os detalhes do vídeo
+                getVideoDetails(videoId, apiKey)
+                    .then(videoDetails => {
+                    if (videoDetails && videoDetails.items.length > 0) {
+                        const snippet = videoDetails.items[0].snippet;
+                        const statistics = videoDetails.items[0].statistics;
+                        const contentDetails = videoDetails.items[0].contentDetails;
+                        
+                        const video = {
+                            title: snippet.title,
+                            duration: convertDuration(contentDetails.duration),
+                            views: statistics.viewCount,
+                            id: videoDetails.items[0].id
+                        }
 
-        const ids = list.map(item => item.id)
-        const check = ids.filter(id => id === videoId)
-        
-        if(check.length == 1){
-            alert("Vídeo já está na sua playlist!")
-            setVideoUrl("")
-        }else{
-            // Obtenha os detalhes do vídeo
-            getVideoDetails(videoId, apiKey)
-                .then(videoDetails => {
-                if (videoDetails && videoDetails.items.length > 0) {
-                    const snippet = videoDetails.items[0].snippet;
-                    const statistics = videoDetails.items[0].statistics;
-                    const contentDetails = videoDetails.items[0].contentDetails;
-                    
-                    const video = {
-                        title: snippet.title,
-                        duration: convertDuration(contentDetails.duration),
-                        views: statistics.viewCount,
-                        id: videoDetails.items[0].id
+                        const videoString = JSON.stringify([...list, video])
+                        localStorage.setItem("@playervideo:data", videoString)
+                        setList(
+                            [
+                                ...list,
+                                {
+                                    title: snippet.title,
+                                    duration: convertDuration(contentDetails.duration),
+                                    views: formatViews(statistics.viewCount),
+                                    id: videoDetails.items[0].id
+                                }
+                            ]
+                        )
+                        setVideoUrl("")
+                    } else {
+                        alert("Vídeo não encontrado ou detalhes indisponíveis.");
                     }
-
-                    const videoString = JSON.stringify([...list, video])
-                    localStorage.setItem("@playervideo:data", videoString)
-                    setList(
-                        [
-                            ...list,
-                            {
-                                title: snippet.title,
-                                duration: convertDuration(contentDetails.duration),
-                                views: formatViews(statistics.viewCount),
-                                id: videoDetails.items[0].id
-                            }
-                        ]
-                    )
-                    setVideoUrl("")
-                } else {
-                    alert("Vídeo não encontrado ou detalhes indisponíveis.");
-                }
                 });
             }
         } else {

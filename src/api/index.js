@@ -28,19 +28,21 @@ export function extractVideoId(urlStr) {
 
 // Função para obter dados do vídeo usando a API do YouTube
 export async function getVideoDetails(videoId, apiKey) {
-try {
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-    params: {
-        part: 'snippet,statistics, contentDetails',
-        id: videoId,
-        key: apiKey,
+    const apiUrl = import.meta.env.VITE_API_URL
+    console.log(apiUrl)
+    try {
+        const response = await axios.get(apiUrl, {
+        params: {
+            part: 'snippet,statistics, contentDetails',
+            id: videoId,
+            key: apiKey,
+        }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao obter detalhes do vídeo:', error.message);
+        return null;
     }
-    });
-    return response.data;
-} catch (error) {
-    console.error('Erro ao obter detalhes do vídeo:', error.message);
-    return null;
-}
 }
 
 export function convertDuration(duration) {
