@@ -2,11 +2,11 @@ import { Fragment, useRef, useEffect, useState} from "react"
 import {Container, ContainerFirst, BackgroundImg, Video, List, Description} from "./styles"
 import { FaPlus, FaTrash, FaSearch } from 'react-icons/fa'
 import VideoPlayer from "../../player/Player"
-import {convertDuration, formatViews, getVideoDetails, extractVideoId} from "../../api"
+import {convertDuration, formatViews, getVideoDetails, getUpdatedViews, extractVideoId} from "../../api"
 
 export function Home(){
 
-    
+    const apiKey = import.meta.env.VITE_API_KEY
     const [list, setList] = useState([])
     const [videoUrl, setVideoUrl] = useState("")
     const [videoDetails, setVideoDetails] = useState(null)
@@ -32,8 +32,6 @@ export function Home(){
     function getClick(){
         const videoId = extractVideoId(videoUrl);
         if (videoId) {
-            const apiKey = import.meta.env.VITE_API_KEY
-            console.log(apiKey)
             const ids = list.map(item => item.id)
             const check = ids.filter(id => id === videoId)
             
@@ -81,8 +79,17 @@ export function Home(){
 
     }
 
-    function selectVideo(id, title, views){
-        setVideoDetails({id, title, views})
+    async function selectVideo(id, title){
+        const updatedViews = await getUpdatedViews(id, apiKey);
+    
+        const updatedList = list.map(item => 
+            item.id === id ? { ...item, views: updatedViews } : item
+        );
+    
+        setList(updatedList);
+        localStorage.setItem("@playervideo:data", JSON.stringify(updatedList));
+    
+        setVideoDetails({ id, title, views: updatedViews });
     }
     
     function deletedVideo(videoId, index){
@@ -131,7 +138,7 @@ export function Home(){
                                 list.map((video, index) => (
                                     <li  
                                         key={video.id} 
-                                        onClick={() => selectVideo(video.id, video.title, video.views)}>
+                                        onClick={() => selectVideo(video.id, video.title)}>
                                         <p>{video.title}</p>
                                         <span>{video.duration}
                                             <span className="deleted" onClick={(e) => {

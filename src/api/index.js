@@ -29,7 +29,6 @@ export function extractVideoId(urlStr) {
 // Função para obter dados do vídeo usando a API do YouTube
 export async function getVideoDetails(videoId, apiKey) {
     const apiUrl = import.meta.env.VITE_API_URL
-    console.log(apiUrl)
     try {
         const response = await axios.get(apiUrl, {
         params: {
@@ -45,6 +44,32 @@ export async function getVideoDetails(videoId, apiKey) {
     }
 }
 
+export async function getUpdatedViews(videoId, apiKey) {
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    try {
+        const response = await axios.get(apiUrl, {
+            params: {
+                part: 'statistics',
+                id: videoId,
+                key: apiKey,
+            }
+        });
+
+        const views = response.data.items?.[0]?.statistics?.viewCount;
+
+        if (!views) {
+            console.warn('Visualizações não encontradas para o vídeo:', videoId);
+            return null;
+        }
+
+        return formatViews(views);
+    } catch (error) {
+        console.error('Erro ao buscar visualizações atualizadas:', error.message);
+        return null;
+    }
+}
+
 export function convertDuration(duration) {
     const regex = /PT(?:(\d+)H)?(?:(\d+)M)?/;
     const matches = duration.match(regex);
@@ -55,10 +80,6 @@ export function convertDuration(duration) {
 }
 
 export function formatViews(input) {
-    let value = input;
-    value = value.replace(/\D/g, '');
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return value;
+    const numericValue = Number(input.toString().replace(/\D/g, ''));
+    return new Intl.NumberFormat('pt-BR').format(numericValue);
 }
-
-
